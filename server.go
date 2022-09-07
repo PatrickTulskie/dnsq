@@ -71,6 +71,30 @@ func getIPRecord(query string) []string {
 	return ips
 }
 
+// Reverse IP Lookups
+func reverseIPHandler(response http.ResponseWriter, request *http.Request) {
+	responseMap := map[string]interface{}{}
+	query := getQuery(request)
+	if len(query) == 0 {
+		response.WriteHeader(400)
+		return
+	}
+	responseMap["answer"] = getReverseIPRecord(query)
+	writeJsonResponse(response, responseMap)
+}
+
+func getReverseIPRecord(query string) []string {
+	hostnames := []string{}
+	results, error := net.LookupAddr(query)
+	if error == nil {
+		for _, result := range results {
+			hostnames = append(hostnames, trimTrailingDot(result))
+		}
+	}
+
+	return hostnames
+}
+
 // Web Helpers
 func getQuery(request *http.Request) string {
 	query := ""
@@ -105,5 +129,6 @@ func main() {
 	mux.HandleFunc("/mx", mxHandler)
 	mux.HandleFunc("/cname", cnameHandler)
 	mux.HandleFunc("/ip", ipHandler)
+	mux.HandleFunc("/reverse", reverseIPHandler)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
