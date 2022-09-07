@@ -14,7 +14,3 @@ Works with `POST` or `GET` verbs. Always with `q` as the input.
 
     curl "http://localhost:8080/ip?q=patricktulskie.com"
     > {"answer":["104.21.78.121","172.67.220.247","2606:4700:3034::ac43:dcf7","2606:4700:3035::6815:4e79"]}
-
-## Final
-
-More coming soon to make this a bit more useful.
