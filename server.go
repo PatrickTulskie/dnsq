@@ -47,6 +47,30 @@ func getCNAMERecord(query string) string {
 	return trimTrailingDot(cname)
 }
 
+// IP Lookups
+func ipHandler(response http.ResponseWriter, request *http.Request) {
+	responseMap := map[string]interface{}{}
+	query := getQuery(request)
+	if len(query) == 0 {
+		response.WriteHeader(400)
+		return
+	}
+	responseMap["answer"] = getIPRecord(query)
+	writeJsonResponse(response, responseMap)
+}
+
+func getIPRecord(query string) []string {
+	ips := []string{}
+	results, error := net.LookupIP(query)
+	if error == nil {
+		for _, result := range results {
+			ips = append(ips, result.String())
+		}
+	}
+
+	return ips
+}
+
 // Web Helpers
 func getQuery(request *http.Request) string {
 	query := ""
@@ -80,5 +104,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mx", mxHandler)
 	mux.HandleFunc("/cname", cnameHandler)
+	mux.HandleFunc("/ip", ipHandler)
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
