@@ -1,9 +1,9 @@
-package main
+package app
 
 import (
+	"dnsq/pkg/dnsq"
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
 )
 
@@ -15,19 +15,8 @@ func mxHandler(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(400)
 		return
 	}
-	responseMap["answer"] = getMXRecords(query)
+	responseMap["answer"] = dnsq.GetMXRecords(query)
 	writeJsonResponse(response, responseMap)
-}
-
-func getMXRecords(query string) []string {
-	hosts := []string{}
-	mxs, error := net.LookupMX(query)
-	if error == nil {
-		for _, mx := range mxs {
-			hosts = append(hosts, trimTrailingDot(mx.Host))
-		}
-	}
-	return hosts
 }
 
 // CNAME Lookups
@@ -38,13 +27,8 @@ func cnameHandler(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(400)
 		return
 	}
-	responseMap["answer"] = getCNAMERecord(query)
+	responseMap["answer"] = dnsq.GetCNAMERecord(query)
 	writeJsonResponse(response, responseMap)
-}
-
-func getCNAMERecord(query string) string {
-	cname, _ := net.LookupCNAME(query)
-	return trimTrailingDot(cname)
 }
 
 // IP Lookups
@@ -55,20 +39,8 @@ func ipHandler(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(400)
 		return
 	}
-	responseMap["answer"] = getIPRecord(query)
+	responseMap["answer"] = dnsq.GetIPRecord(query)
 	writeJsonResponse(response, responseMap)
-}
-
-func getIPRecord(query string) []string {
-	ips := []string{}
-	results, error := net.LookupIP(query)
-	if error == nil {
-		for _, result := range results {
-			ips = append(ips, result.String())
-		}
-	}
-
-	return ips
 }
 
 // Reverse IP Lookups
@@ -79,20 +51,8 @@ func reverseIPHandler(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(400)
 		return
 	}
-	responseMap["answer"] = getReverseIPRecord(query)
+	responseMap["answer"] = dnsq.GetReverseIPRecord(query)
 	writeJsonResponse(response, responseMap)
-}
-
-func getReverseIPRecord(query string) []string {
-	hostnames := []string{}
-	results, error := net.LookupAddr(query)
-	if error == nil {
-		for _, result := range results {
-			hostnames = append(hostnames, trimTrailingDot(result))
-		}
-	}
-
-	return hostnames
 }
 
 // Web Helpers
@@ -113,18 +73,7 @@ func writeJsonResponse(response http.ResponseWriter, data map[string]interface{}
 	response.Write([]byte(responseJson))
 }
 
-// Formatting Helpers
-func trimTrailingDot(hostname string) string {
-	cleaned := hostname
-	last := len(hostname) - 1
-	if last >= 0 && hostname[last] == '.' {
-		cleaned = hostname[:last]
-	}
-
-	return cleaned
-}
-
-func main() {
+func Run() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mx", mxHandler)
 	mux.HandleFunc("/cname", cnameHandler)

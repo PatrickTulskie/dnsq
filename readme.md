@@ -17,3 +17,7 @@ Works with `POST` or `GET` verbs. Always with `q` as the input.
 
     curl "http://localhost:8080/reverse?q=8.8.8.8"
     > {"answer":["dns.google"]}
+
+## Running
+
+    go run main.go
