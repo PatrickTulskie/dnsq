@@ -24,9 +24,9 @@ func GetMXRecords(query string) []string {
 	return hosts
 }
 
-func GetCNAMERecord(query string) string {
+func GetCNAMERecord(query string) []string {
 	cname, _ := net.LookupCNAME(query)
-	return trimTrailingDot(cname)
+	return []string{trimTrailingDot(cname)}
 }
 
 func GetIPRecord(query string) []string {

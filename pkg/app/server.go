@@ -7,53 +7,7 @@ import (
 	"net/http"
 )
 
-// MX Lookups
-func mxHandler(response http.ResponseWriter, request *http.Request) {
-	responseMap := map[string]interface{}{}
-	query := getQuery(request)
-	if len(query) == 0 {
-		response.WriteHeader(400)
-		return
-	}
-	responseMap["answer"] = dnsq.GetMXRecords(query)
-	writeJsonResponse(response, responseMap)
-}
-
-// CNAME Lookups
-func cnameHandler(response http.ResponseWriter, request *http.Request) {
-	responseMap := map[string]interface{}{}
-	query := getQuery(request)
-	if len(query) == 0 {
-		response.WriteHeader(400)
-		return
-	}
-	responseMap["answer"] = dnsq.GetCNAMERecord(query)
-	writeJsonResponse(response, responseMap)
-}
-
-// IP Lookups
-func ipHandler(response http.ResponseWriter, request *http.Request) {
-	responseMap := map[string]interface{}{}
-	query := getQuery(request)
-	if len(query) == 0 {
-		response.WriteHeader(400)
-		return
-	}
-	responseMap["answer"] = dnsq.GetIPRecord(query)
-	writeJsonResponse(response, responseMap)
-}
-
-// Reverse IP Lookups
-func reverseIPHandler(response http.ResponseWriter, request *http.Request) {
-	responseMap := map[string]interface{}{}
-	query := getQuery(request)
-	if len(query) == 0 {
-		response.WriteHeader(400)
-		return
-	}
-	responseMap["answer"] = dnsq.GetReverseIPRecord(query)
-	writeJsonResponse(response, responseMap)
-}
+type fn func(string) []string
 
 // Web Helpers
 func getQuery(request *http.Request) string {
@@ -73,11 +27,24 @@ func writeJsonResponse(response http.ResponseWriter, data map[string]interface{}
 	response.Write([]byte(responseJson))
 }
 
+func genericHandler(f fn) http.Handler {
+	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		responseMap := map[string]interface{}{}
+		query := getQuery(request)
+		if len(query) == 0 {
+			response.WriteHeader(400)
+			return
+		}
+		responseMap["answer"] = f(query)
+		writeJsonResponse(response, responseMap)
+	})
+}
+
 func Run() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/mx", mxHandler)
-	mux.HandleFunc("/cname", cnameHandler)
-	mux.HandleFunc("/ip", ipHandler)
-	mux.HandleFunc("/reverse", reverseIPHandler)
+	mux.Handle("/mx", genericHandler(dnsq.GetMXRecords))
+	mux.Handle("/cname", genericHandler(dnsq.GetCNAMERecord))
+	mux.Handle("/ip", genericHandler(dnsq.GetIPRecord))
+	mux.Handle("/reverse", genericHandler(dnsq.GetReverseIPRecord))
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
